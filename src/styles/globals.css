@@ -1,0 +1,453 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-color: #FF6B35;
+  --dark-bg: #0F0F0F;
+  --dark-card: #1A1A2A;
+  --dark-border: #2A2A2A;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--dark-bg);
+  color: #ffffff;
+  min-height: 100vh;
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dark-card);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--brand-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-light);
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 状态指示器 */
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-running {
+  background: #22c55e;
+  box-shadow: 0 0 10px #22c55e;
+}
+
+.status-idle {
+  background: #eab308;
+  box-shadow: 0 0 10px #eab308;
+}
+
+.status-error {
+  background: #ef4444;
+  box-shadow: 0 0 10px #ef4444;
+}
+
+/* 卡片悬停效果 */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);
+}
+
+/* 自定义滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--dark-bg);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--dark-border);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-color);
+}
+
+/* 渐变文字 */
+.gradient-text {
+  background: linear-gradient(135deg, var(--brand-color), #ff8c61);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 毛玻璃效果 */
+.glass {
+  background: rgba(26, 26, 42, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* 脉冲动画 */
+@keyframes pulse-brand {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-brand {
+  animation: pulse-brand 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Toast 上滑动画 */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* 骨架屏加载动画 */
+@keyframes shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* 按钮点击效果 */
+.btn-active {
+  transform: scale(0.98);
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  /* 防止移动端点击高亮 */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* 优化输入框体验 */
+  input, textarea, select {
+    font-size: 16px; /* 防止 iOS 自动缩放 */
+  }
+  
+  /* 优化按钮点击区域 */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* 加载旋转动画 */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* 危险按钮样式 */
+.btn-danger {
+  @apply bg-red-600 hover:bg-red-700 text-white;
+}
+
+/* 成功按钮样式 */
+.btn-success {
+  @apply bg-green-600 hover:bg-green-700 text-white;
+}
+
+/* 品牌按钮样式 */
+.btn-brand {
+  @apply bg-brand hover:bg-brand-light text-white;
+}
+
+/* 次要按钮样式 */
+.btn-secondary {
+  @apply bg-gray-600 hover:bg-gray-700 text-white;
+}
+
+/* ========================================
+   A2 方案：聊天窗口增强样式
+   学习 OpenClaw WebUI 设计
+   ======================================== */
+
+/* --- Markdown 内容样式 --- */
+.markdown-content {
+  line-height: 1.7;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.markdown-content p {
+  margin-bottom: 0.75em;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content h1,
+.markdown-content h2,
+.markdown-content h3,
+.markdown-content h4 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.markdown-content h1 { font-size: 1.5em; }
+.markdown-content h2 { font-size: 1.3em; }
+.markdown-content h3 { font-size: 1.1em; }
+.markdown-content h4 { font-size: 1em; }
+
+.markdown-content code {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Mono', 'Droid Sans Mono', 'Source Code Pro', monospace;
+  font-size: 0.9em;
+  background: rgba(255, 107, 53, 0.1);
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  color: #ff8c61;
+}
+
+.markdown-content pre {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--dark-border);
+  border-radius: 6px;
+  padding: 1em;
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+
+.markdown-content pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-size: 0.85em;
+  line-height: 1.6;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.markdown-content li {
+  margin: 0.25em 0;
+}
+
+.markdown-content blockquote {
+  border-left: 3px solid var(--brand-color);
+  padding-left: 1em;
+  margin: 0.75em 0;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.markdown-content a {
+  color: var(--brand-color);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown-content a:hover {
+  color: #ff8c61;
+}
+
+.markdown-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75em 0;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid var(--dark-border);
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.markdown-content th {
+  background: rgba(255, 107, 53, 0.1);
+  font-weight: 600;
+}
+
+.markdown-content tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.markdown-content hr {
+  border: none;
+  border-top: 1px solid var(--dark-border);
+  margin: 1em 0;
+}
+
+.markdown-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 0.5em 0;
+}
+
+/* --- 复制按钮样式（学习 OpenClaw WebUI） --- */
+.chat-copy-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--dark-border);
+  border-radius: 6px;
+  background: var(--dark-card);
+  color: #9ca3af;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.chat-copy-btn:hover {
+  background: var(--brand-color);
+  border-color: var(--brand-color);
+  color: white;
+  transform: scale(1.05);
+}
+
+.chat-copy-btn.copied {
+  background: #22c55e;
+  border-color: #22c55e;
+  color: white;
+}
+
+.chat-copy-btn.error {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: white;
+}
+
+.chat-copy-btn__icon {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.chat-copy-btn__icon-copy,
+.chat-copy-btn__icon-check {
+  position: absolute;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.chat-copy-btn__icon-check {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.chat-copy-btn.copied .chat-copy-btn__icon-copy {
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+.chat-copy-btn.copied .chat-copy-btn__icon-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.chat-copy-btn:active {
+  transform: scale(0.95);
+}
+
+/* --- 对话消息样式 --- */
+.conversation-message {
+  position: relative;
+  padding: 0.25em 0;
+}
+
+.conversation-message:hover .chat-copy-btn {
+  opacity: 1;
+}
+
+/* --- 工具消息样式 --- */
+.tool-message {
+  transition: all 0.2s ease;
+}
+
+.tool-message:hover {
+  border-color: var(--brand-color);
+  box-shadow: 0 2px 8px rgba(255, 107, 53, 0.15);
+}
+
+/* --- 飞书消息样式 --- */
+.feishu-message {
+  position: relative;
+  padding-left: 1em;
+}
+
+/* --- 消息悬停效果 --- */
+.group:hover .chat-copy-btn {
+  opacity: 1;
+}
+
+/* --- 移动端优化 --- */
+@media (max-width: 768px) {
+  .markdown-content {
+    font-size: 0.95em;
+  }
+  
+  .markdown-content pre {
+    padding: 0.75em;
+    font-size: 0.8em;
+  }
+  
+  .chat-copy-btn {
+    width: 32px;
+    height: 32px;
+  }
+}
