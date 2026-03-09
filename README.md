@@ -40,14 +40,45 @@
 - **CronManager** - Cron 任务管理（小白友好表单）
 - **CommandPanel** - 快捷命令面板（小按钮 + 弹窗确认）
 
+## ⚠️ 前提条件
+
+**Dashboard 依赖 OpenClaw 网关！**
+
+安装前请确保：
+1. ✅ **OpenClaw 已安装并运行** - https://openclaw.ai
+2. ✅ **Node.js v18+ 已安装** - `node --version`
+3. ✅ **npm 已安装** - `npm --version`
+
+检查 OpenClaw:
+```bash
+openclaw-cn gateway status
+```
+
 ## 🚀 快速开始
 
-### 安装依赖
-
+### 步骤 1: 克隆项目
 ```bash
-cd /Users/rockylam/.openclaw/workspace/projects/openclaw-dashboard
+git clone https://github.com/rockylam0706/openclaw-dashboard.git
+cd openclaw-dashboard
+```
+
+### 步骤 2: 安装依赖
+```bash
 npm install
 ```
+
+### 步骤 3: 启动 Dashboard
+```bash
+# 开发模式（推荐）
+npm run dev
+
+# 或生产模式
+npm start
+```
+
+访问 http://localhost:18790
+
+**详细安装指南**: 查看 [INSTALL-GUIDE.md](INSTALL-GUIDE.md)
 
 ### 开发模式
 
