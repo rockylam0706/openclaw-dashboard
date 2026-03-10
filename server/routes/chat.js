@@ -670,6 +670,117 @@ router.post('/sessions/send', (req, res) => {
   });
 });
 
+// 获取指定 Agent 的最近会话消息列表（适配 AgentTimeline 组件）
+router.get('/recent-messages', async (req, res) => {
+  try {
+    const { agent, offset = '0', limit = '20' } = req.query;
+    
+    if (!agent) {
+      return res.json({ success: false, error: '缺少 agent 参数', messages: [], total: 0 });
+    }
+    
+    // 构建 Agent 的 sessions 目录路径
+    const agentDir = path.join(process.env.HOME || '', '.openclaw', 'agents', agent, 'sessions');
+    const agentSessionsFile = path.join(agentDir, 'sessions.json');
+    
+    if (!fs.existsSync(agentSessionsFile)) {
+      return res.json({ success: false, error: `Agent ${agent} 的会话文件不存在`, messages: [], total: 0 });
+    }
+    
+    const sessionsData = JSON.parse(fs.readFileSync(agentSessionsFile, 'utf-8'));
+    const sessionKeys = Object.keys(sessionsData);
+    
+    if (sessionKeys.length === 0) {
+      return res.json({ success: true, messages: [], total: 0 });
+    }
+    
+    // 按更新时间排序，获取最新的会话
+    const sortedSessions = sessionKeys
+      .map(key => ({
+        sessionKey: key,
+        sessionId: sessionsData[key].sessionId,
+        updatedAt: sessionsData[key].updatedAt || 0
+      }))
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+    
+    // 分页参数
+    const offsetNum = parseInt(offset, 10);
+    const limitNum = parseInt(limit, 10);
+    
+    const allMessages = [];
+    
+    // 读取最新会话的消息
+    for (const sessionInfo of sortedSessions) {
+      const jsonlFile = path.join(agentDir, `${sessionInfo.sessionId}.jsonl`);
+      if (!fs.existsSync(jsonlFile)) continue;
+      
+      const content = fs.readFileSync(jsonlFile, 'utf-8');
+      const lines = content.trim().split('\n').filter(line => line.trim());
+      
+      // 从后往前读取（最新消息在前）
+      for (let i = lines.length - 1; i >= 0; i--) {
+        try {
+          const entry = JSON.parse(lines[i]);
+          if (entry.type !== 'message' || !entry.message?.content) continue;
+          
+          let textContent = '';
+          if (Array.isArray(entry.message.content)) {
+            entry.message.content.forEach(item => {
+              if (item.type === 'text') textContent += item.text;
+            });
+          } else if (typeof entry.message.content === 'string') {
+            textContent = entry.message.content;
+          }
+          
+          // 过滤空消息
+          if (textContent.trim().length === 0) continue;
+          
+          const feishuInfo = parseFeishuMessage(textContent);
+          
+          allMessages.push({
+            id: `msg_${allMessages.length}`,
+            sessionKey: sessionInfo.sessionKey,
+            sessionId: sessionInfo.sessionId,
+            channel: feishuInfo ? 'feishu' : 'webui',
+            sender: feishuInfo 
+              ? `[飞书${feishuInfo.type}] ${feishuInfo.sender}`
+              : (entry.message.role === 'user' ? '用户' : 'AI'),
+            content: feishuInfo ? feishuInfo.content : textContent,
+            timestamp: entry.timestamp 
+              ? (typeof entry.timestamp === 'string' ? new Date(entry.timestamp).getTime() : entry.timestamp)
+              : Date.now(),
+            isSelf: entry.message.role === 'user',
+            role: entry.message.role,
+            isFeishu: !!feishuInfo,
+            feishuType: feishuInfo?.type
+          });
+        } catch (e) {
+          // 跳过解析错误的行
+        }
+      }
+      
+      // 如果已经收集了足够的消息，就停止
+      if (allMessages.length >= offsetNum + limitNum) break;
+    }
+    
+    // 分页
+    const total = allMessages.length;
+    const pagedMessages = allMessages.slice(offsetNum, offsetNum + limitNum);
+    
+    res.json({ 
+      success: true, 
+      messages: pagedMessages,
+      total: total,
+      offset: offsetNum,
+      limit: limitNum,
+      agent: agent
+    });
+  } catch (e) {
+    console.error('获取最近消息失败:', e.message);
+    res.json({ success: false, error: e.message, messages: [], total: 0 });
+  }
+});
+
 // 获取会话列表
 router.get('/sessions', (req, res) => {
   try {

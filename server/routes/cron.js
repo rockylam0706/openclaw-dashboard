@@ -8,8 +8,24 @@ const __dirname = path.dirname(__filename);
 
 const router = express.Router();
 
-// 任务配置文件路径
-const CRON_CONFIG_PATH = path.join(process.env.HOME || '', '.openclaw', 'workspace', 'cron-tasks.json');
+// 工作空间根目录
+const WORKSPACE_ROOT = path.join(process.env.HOME || '', '.openclaw', 'workspace');
+
+// 获取当前 agent 对应的 cron 配置路径
+function getAgentCronConfigPath(agent) {
+  if (!agent) {
+    return path.join(WORKSPACE_ROOT, 'cron-tasks.json');
+  }
+  // 使用 workspace-{agent} 作为子 agent 的工作空间根目录
+  const agentCronPath = path.join(process.env.HOME, '.openclaw', `workspace-${agent}`, 'cron-tasks.json');
+  // 安全校验
+  const agentWorkspaceRoot = path.join(process.env.HOME, '.openclaw', `workspace-${agent}`);
+  if (!path.resolve(agentCronPath).startsWith(path.resolve(agentWorkspaceRoot))) {
+    console.warn('无效的 agent 路径:', agentCronPath);
+    return path.join(WORKSPACE_ROOT, 'cron-tasks.json');
+  }
+  return agentCronPath;
+}
 
 // 问题 5 修复：修正预设命令，确保格式正确可执行
 const TASK_TEMPLATES = [
@@ -68,10 +84,11 @@ const CRON_PRESETS = [
 ];
 
 // 加载任务列表
-function loadTasks() {
+function loadTasks(agent) {
+  const configPath = getAgentCronConfigPath(agent);
   try {
-    if (fs.existsSync(CRON_CONFIG_PATH)) {
-      const data = fs.readFileSync(CRON_CONFIG_PATH, 'utf-8');
+    if (fs.existsSync(configPath)) {
+      const data = fs.readFileSync(configPath, 'utf-8');
       return JSON.parse(data);
     }
   } catch (error) {
@@ -93,13 +110,14 @@ function loadTasks() {
 }
 
 // 保存任务列表
-function saveTasks(tasks) {
+function saveTasks(tasks, agent) {
+  const configPath = getAgentCronConfigPath(agent);
   try {
-    const dir = path.dirname(CRON_CONFIG_PATH);
+    const dir = path.dirname(configPath);
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
-    fs.writeFileSync(CRON_CONFIG_PATH, JSON.stringify(tasks, null, 2), 'utf-8');
+    fs.writeFileSync(configPath, JSON.stringify(tasks, null, 2), 'utf-8');
     return true;
   } catch (error) {
     return false;
@@ -109,11 +127,13 @@ function saveTasks(tasks) {
 // 获取 Cron 任务列表
 router.get('/', (req, res) => {
   try {
-    const tasks = loadTasks();
+    const { agent } = req.query;
+    const tasks = loadTasks(agent);
     res.json({ 
       tasks,
       templates: TASK_TEMPLATES,
-      presets: CRON_PRESETS
+      presets: CRON_PRESETS,
+      agent: agent || null
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -123,9 +143,9 @@ router.get('/', (req, res) => {
 // 创建 Cron 任务
 router.post('/', (req, res) => {
   try {
-    const { name, schedule, command, enabled, template, description } = req.body;
+    const { name, schedule, command, enabled, template, description, agent } = req.body;
     
-    const tasks = loadTasks();
+    const tasks = loadTasks(agent);
     const newTask = {
       id: Date.now().toString(),
       name: name || '新任务',
@@ -140,9 +160,9 @@ router.post('/', (req, res) => {
     };
 
     tasks.push(newTask);
-    saveTasks(tasks);
+    saveTasks(tasks, agent);
     
-    res.json({ success: true, task: newTask });
+    res.json({ success: true, task: newTask, agent: agent || null });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -152,9 +172,9 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { name, schedule, command, enabled, description } = req.body;
+    const { name, schedule, command, enabled, description, agent } = req.body;
     
-    const tasks = loadTasks();
+    const tasks = loadTasks(agent);
     const taskIndex = tasks.findIndex(t => t.id === id);
     
     if (taskIndex === -1) {
@@ -170,8 +190,8 @@ router.put('/:id', (req, res) => {
       enabled: enabled ?? tasks[taskIndex].enabled
     };
 
-    saveTasks(tasks);
-    res.json({ success: true, task: tasks[taskIndex] });
+    saveTasks(tasks, agent);
+    res.json({ success: true, task: tasks[taskIndex], agent: agent || null });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -181,7 +201,8 @@ router.put('/:id', (req, res) => {
 router.delete('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const tasks = loadTasks();
+    const { agent } = req.query;
+    const tasks = loadTasks(agent);
     const taskIndex = tasks.findIndex(t => t.id === id);
     
     if (taskIndex === -1) {
@@ -189,8 +210,8 @@ router.delete('/:id', (req, res) => {
     }
 
     tasks.splice(taskIndex, 1);
-    saveTasks(tasks);
-    res.json({ success: true, message: '任务已删除' });
+    saveTasks(tasks, agent);
+    res.json({ success: true, message: '任务已删除', agent: agent || null });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

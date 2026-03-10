@@ -7,12 +7,15 @@ import MetaDocs from './components/MetaDocs';
 import MemoryManager from './components/MemoryManager';
 import BackupManager from './components/BackupManager';
 import ChatWindow from './components/ChatWindow';
+import AgentSelector from './components/AgentSelector';
+import AgentTimeline from './components/AgentTimeline';
 import Toast from './components/Toast';
 import Version from './components/Version';
 
 const TABS = [
   { id: 'status', label: '状态信息', icon: '📊' },
   { id: 'chat', label: '聊天窗口', icon: '💬' },
+  { id: 'timeline', label: '消息时间线', icon: '📊' },
 ];
 
 function App() {
@@ -23,6 +26,7 @@ function App() {
   const [toast, setToast] = useState(null);
   const [isGatewayRefreshing, setIsGatewayRefreshing] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [selectedAgent, setSelectedAgent] = useState(null);
   const wsRef = useRef(null);
 
   // 获取网关状态
@@ -162,15 +166,32 @@ function App() {
               isRefreshing={isGatewayRefreshing}
             />
             
+            {/* Agent 选择器 */}
+            <div className="bg-dark-card rounded-xl p-4 border border-dark-border">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-semibold flex items-center">
+                  <span className="mr-2">🐝</span>
+                  Agent 选择
+                </h2>
+              </div>
+              <div className="mt-3">
+                <AgentSelector 
+                  selectedAgent={selectedAgent} 
+                  onAgentChange={setSelectedAgent}
+                  showToast={showToast}
+                />
+              </div>
+            </div>
+            
             {/* 移动端单列，平板双列，桌面三列 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {/* 第一行：记忆管理 + 定时任务 */}
               <div className="sm:col-span-2">
-                <MemoryManager showToast={showToast} />
+                <MemoryManager showToast={showToast} selectedAgent={selectedAgent} />
               </div>
               
               <div>
-                <CronManager showToast={showToast} refreshTrigger={refreshTrigger} />
+                <CronManager showToast={showToast} refreshTrigger={refreshTrigger} selectedAgent={selectedAgent} />
               </div>
               
               {/* 第二行：备份管理 + 元文档信息 */}
@@ -179,7 +200,7 @@ function App() {
               </div>
               
               <div>
-                <MetaDocs showToast={showToast} />
+                <MetaDocs showToast={showToast} selectedAgent={selectedAgent} />
               </div>
               
               {/* 第三行：快捷命令（整行） */}
@@ -194,6 +215,13 @@ function App() {
         {activeTab === 'chat' && (
           <div className="animate-fade-in">
             <ChatWindow showToast={showToast} />
+          </div>
+        )}
+        
+        {/* 消息时间线页签 */}
+        {activeTab === 'timeline' && (
+          <div className="animate-fade-in">
+            <AgentTimeline showToast={showToast} selectedAgent={selectedAgent} />
           </div>
         )}
       </main>

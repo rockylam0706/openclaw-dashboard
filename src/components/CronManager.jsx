@@ -8,7 +8,7 @@ import { useState, useEffect, memo } from 'react';
  * 解决方案：使用普通函数，React 18+ 性能足够，不需要过度优化
  */
 
-function CronManager({ showToast, refreshTrigger }) {
+function CronManager({ showToast, refreshTrigger, selectedAgent }) {
   const [tasks, setTasks] = useState([]);
   const [templates, setTemplates] = useState([]);
   const [presets, setPresets] = useState([]);
@@ -26,10 +26,25 @@ function CronManager({ showToast, refreshTrigger }) {
     enabled: true,
   });
 
+  // 构建带 agent 参数的 URL
+  const buildApiUrl = (baseUrl, params = {}) => {
+    const url = new URL(baseUrl, window.location.origin);
+    if (selectedAgent) {
+      url.searchParams.set('agent', selectedAgent);
+    }
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        url.searchParams.set(key, value);
+      }
+    });
+    return url.toString();
+  };
+
   // ✅ 修复：使用普通函数，不使用 useCallback
   const loadTasks = async () => {
     try {
-      const res = await fetch('/api/cron');
+      const url = buildApiUrl('/api/cron');
+      const res = await fetch(url);
       const data = await res.json();
       setTasks(data.tasks || []);
       setTemplates(data.templates || []);
@@ -45,7 +60,7 @@ function CronManager({ showToast, refreshTrigger }) {
   // 加载任务列表和模板
   useEffect(() => {
     loadTasks();
-  }, []);
+  }, [selectedAgent]);
 
   // 监听刷新触发器
   useEffect(() => {
@@ -140,7 +155,8 @@ function CronManager({ showToast, refreshTrigger }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...newTask,
-          template: selectedTemplate || 'custom'
+          template: selectedTemplate || 'custom',
+          agent: selectedAgent || undefined
         }),
       });
       
@@ -171,7 +187,10 @@ function CronManager({ showToast, refreshTrigger }) {
       const res = await fetch(`/api/cron/${editingTask.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTask),
+        body: JSON.stringify({
+          ...newTask,
+          agent: selectedAgent || undefined
+        }),
       });
       
       const data = await res.json();
@@ -195,7 +214,8 @@ function CronManager({ showToast, refreshTrigger }) {
     if (!confirm('确定要删除这个任务吗？')) return;
     
     try {
-      const res = await fetch(`/api/cron/${id}`, { method: 'DELETE' });
+      const url = buildApiUrl(`/api/cron/${id}`, { agent: selectedAgent });
+      const res = await fetch(url, { method: 'DELETE' });
       const data = await res.json();
       if (data.success) {
         setTasks(tasks.filter(t => t.id !== id));
@@ -263,10 +283,17 @@ function CronManager({ showToast, refreshTrigger }) {
     <div className="bg-dark-card rounded-xl p-6 border border-dark-border card-hover shadow-lg">
       {/* 标题栏 */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold flex items-center">
-          <span className="mr-2">⏰</span>
-          Cron 任务
-        </h2>
+        <div className="flex items-center space-x-3">
+          <h2 className="text-lg font-semibold flex items-center">
+            <span className="mr-2">⏰</span>
+            Cron 任务
+          </h2>
+          {selectedAgent && (
+            <span className="px-2 py-0.5 text-xs bg-brand/20 text-brand rounded-full">
+              🐝 {selectedAgent}
+            </span>
+          )}
+        </div>
         <div className="flex items-center space-x-2">
           <button
             onClick={refreshTasks}

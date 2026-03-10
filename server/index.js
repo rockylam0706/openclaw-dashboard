@@ -21,6 +21,7 @@ import commandRoutes from './routes/command.js';
 import docsRoutes from './routes/docs.js';
 import backupRoutes from './routes/backup.js';
 import chatRoutes from './routes/chat.js';
+import agentsRoutes from './routes/agents.js';
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/command', commandRoutes);
 app.use('/api/docs', docsRoutes);
 app.use('/api/backup', backupRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/agents', agentsRoutes);
 
 // 客户端错误日志接口
 app.post('/api/log-error', (req, res) => {

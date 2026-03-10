@@ -9,7 +9,7 @@ const DOC_ICONS = {
   heartbeat: '💓'
 };
 
-function MetaDocs({ showToast }) {
+function MetaDocs({ showToast, selectedAgent }) {
   const [docs, setDocs] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [content, setContent] = useState('');
@@ -18,10 +18,24 @@ function MetaDocs({ showToast }) {
   const [showEditor, setShowEditor] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(Date.now());
 
+  // 构建带 agent 参数的 URL
+  const buildApiUrl = (baseUrl, params = {}) => {
+    const url = new URL(baseUrl, window.location.origin);
+    if (selectedAgent) {
+      url.searchParams.set('agent', selectedAgent);
+    }
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        url.searchParams.set(key, value);
+      }
+    });
+    return url.toString();
+  };
+
   // 加载文档列表
   useEffect(() => {
     loadDocs();
-  }, []);
+  }, [selectedAgent]);
 
   // 问题 9 修复：添加刷新功能
   const refreshDocs = async () => {
@@ -44,7 +58,8 @@ function MetaDocs({ showToast }) {
 
   const loadDocs = async () => {
     try {
-      const res = await fetch('/api/docs/list');
+      const url = buildApiUrl('/api/docs/list');
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setDocs(data.docs || []);
@@ -57,7 +72,8 @@ function MetaDocs({ showToast }) {
   const loadDocContent = async (docId) => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/docs/${docId}`);
+      const url = buildApiUrl(`/api/docs/${docId}`);
+      const res = await fetch(url);
       const data = await res.json();
       
       if (data.success) {
@@ -80,7 +96,7 @@ function MetaDocs({ showToast }) {
       const res = await fetch(`/api/docs/${selectedDoc.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, agent: selectedAgent || undefined }),
       });
       
       const data = await res.json();
@@ -101,10 +117,17 @@ function MetaDocs({ showToast }) {
       {/* 标题栏 */}
       <div className="p-4 border-b border-dark-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold flex items-center">
-            <span className="mr-2">📄</span>
-            元文档
-          </h2>
+          <div className="flex items-center space-x-3">
+            <h2 className="text-lg font-semibold flex items-center">
+              <span className="mr-2">📄</span>
+              元文档
+            </h2>
+            {selectedAgent && (
+              <span className="px-2 py-0.5 text-xs bg-brand/20 text-brand rounded-full">
+                🐝 {selectedAgent}
+              </span>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <span className="text-xs text-gray-500 hidden sm:inline">
               {new Date(lastUpdate).toLocaleTimeString()}

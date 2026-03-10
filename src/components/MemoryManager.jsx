@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-function MemoryManager({ showToast }) {
+function MemoryManager({ showToast, selectedAgent }) {
   const [activeTab, setActiveTab] = useState('daily'); // 'daily' or 'longterm'
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [content, setContent] = useState('');
@@ -10,15 +10,29 @@ function MemoryManager({ showToast }) {
   const [hasLongTerm, setHasLongTerm] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(Date.now());
 
+  // 构建带 agent 参数的 URL
+  const buildApiUrl = (baseUrl, params = {}) => {
+    const url = new URL(baseUrl, window.location.origin);
+    if (selectedAgent) {
+      url.searchParams.set('agent', selectedAgent);
+    }
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        url.searchParams.set(key, value);
+      }
+    });
+    return url.toString();
+  };
+
   // 加载记忆文件列表
   useEffect(() => {
     loadFileList();
-  }, []);
+  }, [selectedAgent]);
 
   // 加载内容（仅手动刷新，移除自动刷新）
   useEffect(() => {
     loadContent();
-  }, [activeTab, selectedDate]);
+  }, [activeTab, selectedDate, selectedAgent]);
 
   // 手动刷新功能（仅用户点击时触发）
   const refreshMemory = async () => {
@@ -42,7 +56,8 @@ function MemoryManager({ showToast }) {
 
   const loadFileList = async () => {
     try {
-      const res = await fetch('/api/memory/list');
+      const url = buildApiUrl('/api/memory/list');
+      const res = await fetch(url);
       const data = await res.json();
       if (data.success) {
         setDailyFiles(data.daily || []);
@@ -63,7 +78,8 @@ function MemoryManager({ showToast }) {
         params.append('file', `${selectedDate}.md`);
       }
       
-      const res = await fetch(`/api/memory?${params}`);
+      const url = buildApiUrl(`/api/memory?${params}`);
+      const res = await fetch(url);
       const data = await res.json();
       
       if (data.success) {
@@ -86,6 +102,7 @@ function MemoryManager({ showToast }) {
           file: activeTab === 'daily' ? `${selectedDate}.md` : 'MEMORY.md',
           content,
           type: activeTab,
+          agent: selectedAgent || undefined
         }),
       });
       
@@ -93,9 +110,15 @@ function MemoryManager({ showToast }) {
       if (data.success) {
         // 刷新文件列表
         loadFileList();
+        if (showToast) {
+          showToast('保存成功', 'success', 2000);
+        }
       }
     } catch (error) {
       console.error('保存失败:', error);
+      if (showToast) {
+        showToast('保存失败', 'error', 3000);
+      }
     } finally {
       setSaving(false);
     }
@@ -118,10 +141,17 @@ function MemoryManager({ showToast }) {
       {/* 标题栏 */}
       <div className="p-4 border-b border-dark-border">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold flex items-center">
-            <span className="mr-2">🧠</span>
-            记忆管理
-          </h2>
+          <div className="flex items-center space-x-3">
+            <h2 className="text-lg font-semibold flex items-center">
+              <span className="mr-2">🧠</span>
+              记忆管理
+            </h2>
+            {selectedAgent && (
+              <span className="px-2 py-0.5 text-xs bg-brand/20 text-brand rounded-full">
+                🐝 {selectedAgent}
+              </span>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <span className="text-xs text-gray-500 hidden sm:inline">
               {new Date(lastUpdate).toLocaleTimeString()}
